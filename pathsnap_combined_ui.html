@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PathSnap | Combined dashboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0f172a;color:#e2e8f0;font:16px -apple-system,BlinkMacSystemFont,Arial,sans-serif}header{padding:24px 5%;border-bottom:1px solid #334155}h1{margin:0;color:#60a5fa;font-size:32px}h2{margin:0 0 16px;font-size:20px}p,small{color:#94a3b8}main{max-width:1280px;margin:auto;padding:24px}.panel{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:20px;margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.grid .panel{margin:0}.value{font-size:30px;font-weight:700;color:#86efac;margin-top:10px;font-variant-numeric:tabular-nums}.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}input,select,button{font:inherit;padding:11px 12px;border:1px solid #475569;border-radius:8px;background:#334155;color:white}input{width:min(100%,340px)}button{background:#2563eb;border:0;cursor:pointer}button:disabled{opacity:.5;cursor:default}iframe{width:100%;height:520px;border:0;border-radius:8px;background:#121b2b}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th,td{text-align:left;padding:12px 7px;border-bottom:1px solid #334155}#status{min-height:20px}#routes{overflow-wrap:anywhere;font:13px monospace;max-height:180px;overflow:auto}label{display:block;color:#cbd5e1;margin-bottom:7px} @media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}iframe{height:400px}} @media(max-width:450px){.grid{grid-template-columns:1fr}}
+</style></head><body><header><h1>PathSnap</h1><p>Distributed map-matching · Tuned Histogram Gradient Boosting + Viterbi</p><small>Student testing and reserved final evaluation · separate datasets</small></header><main>
+<section class="panel"><h2>Trip selection</h2>
+<label for="dataset">Dataset</label><div class="controls"><select id="dataset"><option value="8002">Student testing</option><option value="8003">Final evaluator</option></select><small id="modeNote">Development predictions only.</small></div><br>
+<label for="api">API server address (port updates automatically)</label><div class="controls"><input id="api" type="url" value="" placeholder="http://10.x.x.x:8002"><button id="connect">Connect</button><select id="trip" aria-label="Trip ID" disabled></select><button id="run" disabled>Predict route</button></div><p id="status" role="status">Connect to the model server.</p></section>
+<div class="grid"><section class="panel"><small>GPS observations</small><div class="value" id="gps">—</div></section><section class="panel"><small>HMM proxy accuracy</small><div class="value" id="accuracy">—</div></section><section class="panel"><small>HMM continuity</small><div class="value" id="continuity">—</div></section><section class="panel"><small>Prediction latency</small><div class="value" id="latency">—</div></section></div>
+<section class="panel"><h2>Route visualisation</h2><p><span style="color:#60a5fa">● GPS</span> · <span style="color:#f87171">● Classifier</span> · <span style="color:#4ade80">● HMM</span> · Grey roads. Use the map layer controls to compare.</p><iframe id="map" title="Predicted route map"></iframe></section>
+<section class="panel"><h2>Classifier vs HMM</h2><table><thead><tr><th>Metric</th><th>Classifier</th><th>HMM</th></tr></thead><tbody id="comparison"></tbody></table><p>Proxy accuracy is measured against nearest reference road segments, not verified per-fix ground truth. The endpoint does not return reference route labels.</p><details><summary>Predicted arc IDs</summary><div id="routes"></div></details></section></main>
+<script>
+const $ = id => document.getElementById(id);
+let api = '', busy = false, ready = false;
+const pct = v => v == null || !Number.isFinite(v) ? 'N/A' : (100*v).toFixed(2)+'%';
+const evaluator = () => $('dataset').value === '8003';
+function clearResults(){
+  for(const id of ['gps','accuracy','continuity','latency']) $(id).textContent='—';
+  $('comparison').replaceChildren(); $('routes').textContent=''; $('map').src='about:blank';
+}
+function controls(){
+  for(const id of ['dataset','api','connect']) $(id).disabled=busy;
+  $('trip').disabled=busy || !ready; $('run').disabled=busy || !ready;
+}
+function reset(){ready=false; api=''; $('trip').replaceChildren(); clearResults(); controls();}
+function serverAddress(){
+  const u=new URL($('api').value.trim());
+  if(!['http:','https:'].includes(u.protocol)) throw Error('Use an HTTP or HTTPS server address');
+  u.port=$('dataset').value; $('api').value=u.origin; return u.origin;
+}
+async function get(path){
+  let res;
+  try{
+    res=await fetch(api+path,{cache:'no-store'});
+  }catch{
+    throw Error('Cannot reach the API at '+api+'. Check the server address and whether it is running.');
+  }
+  if(!res.ok){
+    const body=await res.json().catch(()=>null);
+    throw Error(typeof body?.detail==='string' ? body.detail : 'API returned HTTP '+res.status);
+  }
+  return res.json();
+}
+async function connect(){
+  if(busy)return; reset(); busy=true; controls(); $('status').textContent='Connecting…';
+  try{
+    api=serverAddress();
+    const d=await get('/trips');
+    if(!Array.isArray(d.trips))throw Error('Invalid trip list');
+    for(const id of d.trips) $('trip').add(new Option('Trip '+id,id));
+    ready=d.trips.length>0;
+    $('status').textContent='Connected · '+d.trips.length+(evaluator()?' reserved evaluator trips':' student-testing trips')+(d.trips.length===10?'':' (expected 10)');
+  }catch(e){$('status').textContent=e.message;}
+  finally{busy=false;controls();}
+}
+async function predict(){
+  if(busy||!ready)return;
+  const id=encodeURIComponent($('trip').value);
+  busy=true;controls();clearResults();$('status').textContent='Running feature extraction and Viterbi…';
+  try{
+    const d=await get('/predict/'+id);
+    $('gps').textContent=d.gps_observations;
+    $('accuracy').textContent=pct(d.hmm.proxy_accuracy);
+    $('continuity').textContent=pct(d.hmm.continuity);
+    $('latency').textContent=Number.isFinite(d.prediction_seconds)?d.prediction_seconds.toFixed(2)+' s':'N/A';
+    for(const [key,label] of [['proxy_accuracy','Top-1 proxy accuracy'],['continuity','Direct route continuity'],['sequence_overlap_f1','Sequence overlap F1'],['ordered_sequence_similarity','Ordered sequence similarity']]){
+      const row=$('comparison').insertRow();
+      for(const value of [label,pct(d.classifier[key]),pct(d.hmm[key])])row.insertCell().textContent=value;
+    }
+    $('routes').textContent=d.predicted_route.join(', ');
+    $('map').src=api+'/map/'+id;
+    $('status').textContent='Prediction complete · '+d.model;
+  }catch(e){clearResults();$('status').textContent='Prediction failed: '+e.message;}
+  finally{busy=false;controls();}
+}
+$('connect').onclick=connect; $('run').onclick=predict;
+$('trip').onchange=()=>{clearResults();$('status').textContent='Trip selected. Click Predict route.';};
+$('api').oninput=()=>{reset();$('status').textContent='Server address changed. Click Connect.';};
+$('dataset').onchange=()=>{
+  reset();
+  $('modeNote').textContent=evaluator()?'Reserved evaluation only — predict when authorised by faculty.':'Development predictions only.';
+  try{serverAddress();}catch(e){}
+  $('status').textContent='Dataset changed. Click Connect.';
+};
+controls();
+</script></body></html>
