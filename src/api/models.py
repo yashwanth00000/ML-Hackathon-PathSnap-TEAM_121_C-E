@@ -17,9 +17,9 @@ class PredictRequest(BaseModel):
     trip_id: str = Field(..., description="Evaluator-test trip identifier.")
 
 
-# ---------------------------------------------------------------------------
+
 # Response sub-schemas
-# ---------------------------------------------------------------------------
+
 
 class ArcGeometry(BaseModel):
     """Geographic endpoints for a single arc (for map rendering)."""
