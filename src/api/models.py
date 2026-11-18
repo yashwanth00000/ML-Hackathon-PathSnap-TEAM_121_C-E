@@ -10,9 +10,6 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
-# ---------------------------------------------------------------------------
-# Request schemas
-# ---------------------------------------------------------------------------
 
 class PredictRequest(BaseModel):
     """Body for POST /predict."""
