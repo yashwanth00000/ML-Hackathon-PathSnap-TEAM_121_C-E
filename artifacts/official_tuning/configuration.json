@@ -1,0 +1,25 @@
+{
+  "features": [
+    "distance_m",
+    "bearing_difference_deg",
+    "speed_mps",
+    "arc_length_m",
+    "projection_fraction",
+    "time_gap_s",
+    "candidate_rank"
+  ],
+  "k": 5,
+  "seed": 42,
+  "best_params": {
+    "max_iter": 160,
+    "learning_rate": 0.055109977284568026,
+    "max_leaf_nodes": 23,
+    "min_samples_leaf": 80,
+    "l2_regularization": 4.932771278824096
+  },
+  "best_trial": 12,
+  "cv_macro_f1": 0.8600037724932246,
+  "search_seconds": 325.806552167,
+  "trials": 15,
+  "label_method": "nearest reference segment proxy; not verified per-fix labels"
+}
