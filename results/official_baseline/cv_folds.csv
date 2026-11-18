@@ -1,0 +1,26 @@
+model,fold,macro_f1
+Logistic Regression,1,0.8247115181257598
+Logistic Regression,2,0.8168127476163041
+Logistic Regression,3,0.8230705465162178
+Logistic Regression,4,0.8577325574801941
+Logistic Regression,5,0.8333019587104962
+Gaussian Naive Bayes,1,0.7984393266367669
+Gaussian Naive Bayes,2,0.7915565239790953
+Gaussian Naive Bayes,3,0.8102737542006833
+Gaussian Naive Bayes,4,0.7901129658895119
+Gaussian Naive Bayes,5,0.8150549408145584
+Decision Tree,1,0.8246243319815983
+Decision Tree,2,0.8407384976549654
+Decision Tree,3,0.8522766973284617
+Decision Tree,4,0.8953047929120819
+Decision Tree,5,0.8551541835762142
+Random Forest,1,0.8357379237305225
+Random Forest,2,0.8416052677200482
+Random Forest,3,0.8519180477013266
+Random Forest,4,0.8946178347390976
+Random Forest,5,0.8578253035582956
+Histogram Gradient Boosting,1,0.845780460123434
+Histogram Gradient Boosting,2,0.8426789583567207
+Histogram Gradient Boosting,3,0.8534166660771918
+Histogram Gradient Boosting,4,0.8956643928824963
+Histogram Gradient Boosting,5,0.8575040012703251
