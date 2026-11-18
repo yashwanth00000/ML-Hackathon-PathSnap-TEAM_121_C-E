@@ -35,9 +35,9 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-# ---------------------------------------------------------------------------
+
 # Geographic helpers
-# ---------------------------------------------------------------------------
+
 
 EARTH_RADIUS_M = 6_371_000.0  # mean Earth radius in metres
 
