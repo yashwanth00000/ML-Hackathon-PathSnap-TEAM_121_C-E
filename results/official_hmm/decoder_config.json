@@ -1,0 +1,9 @@
+{
+  "beta": 0.5,
+  "max_hops": 4,
+  "disconnected_penalty": 12.0,
+  "gap_seconds": 60.0,
+  "parameter_selection": "initial fixed configuration; not optimized",
+  "label_method": "nearest-reference proxy",
+  "sequence_metric": "collapsed arc multiset F1 and difflib ordered matching similarity; skipped intermediate arcs not inserted"
+}
